@@ -1,4 +1,5 @@
 <title>🪙가계부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><title>🪙가계부</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -447,14 +448,38 @@
     el.inpNewIcon.appendChild(opt);
   });
 
+  function hasClaudeStorage(){
+    return typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+  }
+  async function storageGet(key){
+    if(hasClaudeStorage()){
+      try{ return await window.storage.get(key, false); }
+      catch(e){ return null; }
+    }
+    try{
+      var raw = window.localStorage.getItem('ledger:' + key);
+      return raw !== null ? {key:key, value:raw} : null;
+    }catch(e){ return null; }
+  }
+  async function storageSet(key, value){
+    if(hasClaudeStorage()){
+      try{ return await window.storage.set(key, value, false); }
+      catch(e){ return null; }
+    }
+    try{
+      window.localStorage.setItem('ledger:' + key, value);
+      return {key:key, value:value};
+    }catch(e){ return null; }
+  }
+
   async function loadData(){
     try{
-      var exp = await window.storage.get('expenses', false);
+      var exp = await storageGet('expenses');
       state.expenses = exp && exp.value ? JSON.parse(exp.value) : [];
     }catch(e){ state.expenses = []; }
 
     try{
-      var cats = await window.storage.get('fixed-categories', false);
+      var cats = await storageGet('fixed-categories');
       var parsed = cats && cats.value ? JSON.parse(cats.value) : null;
       if(!parsed){
         state.fixedCategories = DEFAULT_FIXED_CATEGORIES.slice();
@@ -468,7 +493,7 @@
     }catch(e){ state.fixedCategories = DEFAULT_FIXED_CATEGORIES.slice(); }
 
     try{
-      var sk = await window.storage.get('fixed-skips', false);
+      var sk = await storageGet('fixed-skips');
       state.fixedSkips = sk && sk.value ? JSON.parse(sk.value) : {};
     }catch(e){ state.fixedSkips = {}; }
 
@@ -476,15 +501,15 @@
   }
 
   async function saveExpenses(){
-    try{ await window.storage.set('expenses', JSON.stringify(state.expenses), false); }
+    try{ await storageSet('expenses', JSON.stringify(state.expenses)); }
     catch(e){ console.error('저장 실패', e); }
   }
   async function saveCategories(){
-    try{ await window.storage.set('fixed-categories', JSON.stringify(state.fixedCategories), false); }
+    try{ await storageSet('fixed-categories', JSON.stringify(state.fixedCategories)); }
     catch(e){ console.error('저장 실패', e); }
   }
   async function saveSkips(){
-    try{ await window.storage.set('fixed-skips', JSON.stringify(state.fixedSkips), false); }
+    try{ await storageSet('fixed-skips', JSON.stringify(state.fixedSkips)); }
     catch(e){ console.error('저장 실패', e); }
   }
 
